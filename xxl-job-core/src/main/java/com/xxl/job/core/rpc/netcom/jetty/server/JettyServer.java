@@ -43,13 +43,16 @@ public class JettyServer {
 
 				try {
 					// Start server
+					// 启动jetty server
 					server.start();
 					logger.info(">>>>>>>>>>> xxl-job jetty server start success at port:{}.", port);
 
 					// Start Registry-Server
+					// 将job执行器注册到admin
 					ExecutorRegistryThread.getInstance().start(port, ip, appName);
 
 					// Start Callback-Server
+					// 启动一个线程 处理回调任务
 					TriggerCallbackThread.getInstance().start();
 
 					server.join();	// block until thread stopped

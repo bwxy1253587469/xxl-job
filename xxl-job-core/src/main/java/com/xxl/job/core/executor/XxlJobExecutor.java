@@ -29,11 +29,16 @@ public class XxlJobExecutor implements ApplicationContextAware {
     private static final Logger logger = LoggerFactory.getLogger(XxlJobExecutor.class);
 
     // ---------------------- param ----------------------
+    // admin地址
     private String adminAddresses;
+    // 执行器名称
     private String appName;
     private String ip;
+    // 客户端 端口
     private int port;
+    //
     private String accessToken;
+    // 日志路径
     private String logPath;
     private int logRetentionDays;
 
@@ -73,15 +78,18 @@ public class XxlJobExecutor implements ApplicationContextAware {
     // ---------------------- start + stop ----------------------
     public void start() throws Exception {
         // init admin-client
+        // 根据admin IP个数 创建代理类
         initAdminBizList(adminAddresses, accessToken);
 
         // init executor-jobHandlerRepository
+        // 读取有JobHandler注解的bean 并缓存到jobHandlerRepository
         initJobHandlerRepository(applicationContext);
 
         // init logpath
         XxlJobFileAppender.initLogPath(logPath);
 
         // init executor-server
+        // 启动jetty客户端 注册客户端信息（执行器名称 IP）到admin 并不会把job的信息注册到admin
         initExecutorServer(port, ip, appName, accessToken);
 
         // init JobLogFileCleanThread
@@ -166,6 +174,7 @@ public class XxlJobExecutor implements ApplicationContextAware {
                     if (loadJobHandler(name) != null) {
                         throw new RuntimeException("xxl-job jobhandler naming conflicts.");
                     }
+                    // 类路径
                     registJobHandler(name, handler);
                 }
             }
@@ -182,6 +191,7 @@ public class XxlJobExecutor implements ApplicationContextAware {
 
         JobThread oldJobThread = JobThreadRepository.put(jobId, newJobThread);	// putIfAbsent | oh my god, map's put method return the old value!!!
         if (oldJobThread != null) {
+            // 标志位+interrupt终止线程
             oldJobThread.toStop(removeOldReason);
             oldJobThread.interrupt();
         }

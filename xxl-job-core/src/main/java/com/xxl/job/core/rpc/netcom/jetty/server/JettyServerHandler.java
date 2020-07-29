@@ -18,6 +18,7 @@ import java.io.OutputStream;
 
 /**
  * jetty handler
+ * 客户端和admin都通过这个出来http请求
  * @author xuxueli 2015-11-19 22:32:36
  */
 public class JettyServerHandler extends AbstractHandler {
@@ -54,6 +55,9 @@ public class JettyServerHandler extends AbstractHandler {
 			RpcRequest rpcRequest = (RpcRequest) HessianSerializer.deserialize(requestBytes, RpcRequest.class);
 
 			// invoke
+			// RpcRequest
+			// 客户端请求admin className = com.xxl.job.core.biz.AdminBiz
+			// admin请求客户端 ClassName = com.xxl.job.core.biz.ExecutorBiz
 			RpcResponse rpcResponse = NetComServerFactory.invokeService(rpcRequest, null);
 			return rpcResponse;
 		} catch (Exception e) {

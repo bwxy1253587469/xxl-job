@@ -197,9 +197,9 @@ public class XxlJobTrigger {
     public static ReturnT<String> runExecutor(TriggerParam triggerParam, String address){
         ReturnT<String> runResult = null;
         try {
-            // 返回的代理对象 不是ExecutorBizImpl 这是给客户端用的
+            // 返回的代理对象 不是ExecutorBizImpl 客户端job执行成功 回调时调用
             ExecutorBiz executorBiz = XxlJobDynamicScheduler.getExecutorBiz(address);
-            // admin都是运行com.xxl.job.core.rpc.netcom.NetComClientProxy.getObject的invoke方法
+            // admin是运行com.xxl.job.core.rpc.netcom.NetComClientProxy.getObject的invoke方法
             runResult = executorBiz.run(triggerParam);
         } catch (Exception e) {
             logger.error(">>>>>>>>>>> xxl-job trigger error, please check if the executor[{}] is running.", address, e);

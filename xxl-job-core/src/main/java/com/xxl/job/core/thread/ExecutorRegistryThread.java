@@ -37,6 +37,7 @@ public class ExecutorRegistryThread extends Thread {
         }
 
         // executor address (generate addredd = ip:port)
+        // 如果参数IP为空 则获取本地IP
         final String executorAddress;
         if (ip != null && ip.trim().length()>0) {
             executorAddress = ip.trim().concat(":").concat(String.valueOf(port));
@@ -49,11 +50,17 @@ public class ExecutorRegistryThread extends Thread {
             public void run() {
 
                 // registry
+                // 每30s循环执行一次
                 while (!toStop) {
                     try {
                         RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), appName, executorAddress);
+                        // 循环注册到admin中
+                        // adminBiz = com.xxl.job.core.rpc.netcom.NetComClientProxy.getObject创建的代理对象
                         for (AdminBiz adminBiz: XxlJobExecutor.getAdminBizList()) {
                             try {
+                                // com.xxl.job.core.rpc.netcom.NetComClientProxy.getObject invoke方法
+                                // 调用admin的com.xxl.job.admin.controller.JobApiController.api
+                                // 一通反射实际执行admin的com.xxl.job.admin.service.impl.AdminBizImpl.registry
                                 ReturnT<String> registryResult = adminBiz.registry(registryParam);
                                 if (registryResult!=null && ReturnT.SUCCESS_CODE == registryResult.getCode()) {
                                     registryResult = ReturnT.SUCCESS;
@@ -78,6 +85,7 @@ public class ExecutorRegistryThread extends Thread {
                     }
                 }
 
+                // spring销毁bean的时候 删除客户端的注册信息
                 // registry remove
                 try {
                     RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), appName, executorAddress);

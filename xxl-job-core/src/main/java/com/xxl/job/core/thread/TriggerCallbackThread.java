@@ -33,6 +33,7 @@ public class TriggerCallbackThread {
     /**
      * job results callback queue
      */
+    // job执行结果回调队列
     private LinkedBlockingQueue<HandleCallbackParam> callBackQueue = new LinkedBlockingQueue<HandleCallbackParam>();
     public static void pushCallBack(HandleCallbackParam callback){
         getInstance().callBackQueue.add(callback);
@@ -59,6 +60,7 @@ public class TriggerCallbackThread {
             @Override
             public void run() {
 
+                // 循环从队列中获取任务 进行回调
                 // normal callback
                 while(!toStop){
                     try {
@@ -80,6 +82,7 @@ public class TriggerCallbackThread {
                     }
                 }
 
+                // bean被销毁时 进行最后一次从队列获取任务 进行回调
                 // last callback
                 try {
                     List<HandleCallbackParam> callbackParamList = new ArrayList<HandleCallbackParam>();
@@ -98,6 +101,7 @@ public class TriggerCallbackThread {
         triggerCallbackThread.start();
 
 
+        // 日志相关
         // retry
         triggerRetryCallbackThread = new Thread(new Runnable() {
             @Override
@@ -149,6 +153,7 @@ public class TriggerCallbackThread {
         // callback, will retry if error
         for (AdminBiz adminBiz: XxlJobExecutor.getAdminBizList()) {
             try {
+                // 发起http请求进行回调
                 ReturnT<String> callbackResult = adminBiz.callback(callbackParamList);
                 if (callbackResult!=null && ReturnT.SUCCESS_CODE == callbackResult.getCode()) {
                     callbackLog(callbackParamList, "<br>----------- xxl-job job callback finish.");

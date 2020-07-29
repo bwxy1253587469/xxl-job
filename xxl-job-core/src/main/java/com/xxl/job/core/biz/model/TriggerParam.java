@@ -8,10 +8,22 @@ import java.io.Serializable;
 public class TriggerParam implements Serializable{
     private static final long serialVersionUID = 42L;
 
+    /**
+     * jobID
+     */
     private int jobId;
 
+    /**
+     *执行器任务handler 也就是job类路径
+     */
     private String executorHandler;
+    /**
+     * job参数
+     */
     private String executorParams;
+    /**
+     * job阻塞策略
+     */
     private String executorBlockStrategy;
     private int executorTimeout;
 

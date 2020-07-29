@@ -93,6 +93,7 @@ public class JobThread extends Thread{
     @Override
 	public void run() {
 
+    	// 执行任务
     	// init
     	try {
 			handler.init();
@@ -102,6 +103,7 @@ public class JobThread extends Thread{
 
 		// execute
 		while(!toStop){
+			// 执行次数
 			running = false;
 			idleTimes++;
 
@@ -123,10 +125,12 @@ public class JobThread extends Thread{
 					// execute
 					XxlJobLogger.log("<br>----------- xxl-job job execute start -----------<br>----------- Param:" + triggerParam.getExecutorParams());
 
+					// 当有job超时时间 异步执行job
 					if (triggerParam.getExecutorTimeout() > 0) {
 						// limit timeout
 						Thread futureThread = null;
 						try {
+							// 异步执行job
 							final TriggerParam triggerParamTmp = triggerParam;
 							FutureTask<ReturnT<String>> futureTask = new FutureTask<ReturnT<String>>(new Callable<ReturnT<String>>() {
 								@Override
@@ -137,6 +141,7 @@ public class JobThread extends Thread{
 							futureThread = new Thread(futureTask);
 							futureThread.start();
 
+							// 等待任务结果返回
 							executeResult = futureTask.get(triggerParam.getExecutorTimeout(), TimeUnit.SECONDS);
 						} catch (TimeoutException e) {
 
@@ -148,6 +153,7 @@ public class JobThread extends Thread{
 							futureThread.interrupt();
 						}
 					} else {
+						// 没有超时时间 则直接执行任务
 						// just execute
 						executeResult = handler.execute(triggerParam.getExecutorParams());
 					}
@@ -178,6 +184,7 @@ public class JobThread extends Thread{
                     // callback handler info
                     if (!toStop) {
                         // commonm
+						// 将执行结果放到队列中
                         TriggerCallbackThread.pushCallBack(new HandleCallbackParam(triggerParam.getLogId(), triggerParam.getLogDateTim(), executeResult));
                     } else {
                         // is killed

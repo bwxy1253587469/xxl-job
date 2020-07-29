@@ -43,6 +43,8 @@ public class NetComServerFactory  {
 		NetComServerFactory.accessToken = accessToken;
 	}
 	public static RpcResponse invokeService(RpcRequest request, Object serviceBean) {
+		// 客户端请求admin传的ClassName = com.xxl.job.core.biz.AdminBiz
+		// admin请求客户端传的ClassName = com.xxl.job.core.biz.ExecutorBiz
 		if (serviceBean==null) {
 			serviceBean = serviceMap.get(request.getClassName());
 		}
@@ -62,6 +64,7 @@ public class NetComServerFactory  {
 		}
 
 		try {
+			// 反射 实际执行com.xxl.job.admin.service.impl.AdminBizImpl
 			Class<?> serviceClass = serviceBean.getClass();
 			String methodName = request.getMethodName();
 			Class<?>[] parameterTypes = request.getParameterTypes();

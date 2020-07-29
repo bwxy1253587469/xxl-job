@@ -78,6 +78,8 @@ public class ExecutorBizImpl implements ExecutorBiz {
         if (GlueTypeEnum.BEAN == glueTypeEnum) {
 
             // new jobhandler
+            // job类路径
+            // 从缓存中获取job信息
             IJobHandler newJobHandler = XxlJobExecutor.loadJobHandler(triggerParam.getExecutorHandler());
 
             // valid old jobThread
@@ -141,11 +143,18 @@ public class ExecutorBizImpl implements ExecutorBiz {
             return new ReturnT<String>(ReturnT.FAIL_CODE, "glueType[" + triggerParam.getGlueType() + "] is not valid.");
         }
 
+        // jobThread为空 代表没有任务正在执行
+        // 则根据阻塞策略
+        // 1. 单机串行 则jobThread 不变 将任务jobHandler加入到jobThread的队列中
+        // 2. 抛弃前一个任务 直接返回
+        // 3. 覆盖前一个任务 暂停旧任务即：thread.stop 并创建一个新的线程执行任务
+
         // executor block strategy
         if (jobThread != null) {
             ExecutorBlockStrategyEnum blockStrategy = ExecutorBlockStrategyEnum.match(triggerParam.getExecutorBlockStrategy(), null);
             if (ExecutorBlockStrategyEnum.DISCARD_LATER == blockStrategy) {
                 // discard when running
+                // 判断是否有任务已经在运行了
                 if (jobThread.isRunningOrHasQueue()) {
                     return new ReturnT<String>(ReturnT.FAIL_CODE, "block strategy effect："+ExecutorBlockStrategyEnum.DISCARD_LATER.getTitle());
                 }
