@@ -13,10 +13,12 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ExecutorRouteRound extends ExecutorRouter {
 
+    // key = jobId value = 首次随机数 后面每次加一
     private static ConcurrentHashMap<Integer, Integer> routeCountEachJob = new ConcurrentHashMap<Integer, Integer>();
     private static long CACHE_VALID_TIME = 0;
     private static int count(int jobId) {
         // cache clear
+        // 一天清除一次
         if (System.currentTimeMillis() > CACHE_VALID_TIME) {
             routeCountEachJob.clear();
             CACHE_VALID_TIME = System.currentTimeMillis() + 1000*60*60*24;

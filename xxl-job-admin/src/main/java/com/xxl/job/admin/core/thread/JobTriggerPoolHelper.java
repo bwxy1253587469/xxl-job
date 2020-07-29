@@ -29,6 +29,7 @@ public class JobTriggerPoolHelper {
 
 
     public void addTrigger(final int jobId, final TriggerTypeEnum triggerType, final int failRetryCount, final String executorShardingParam, final String executorParam) {
+        // 提交任务
         triggerPool.execute(new Runnable() {
             @Override
             public void run() {
@@ -59,6 +60,7 @@ public class JobTriggerPoolHelper {
      *          not null: cover job param
      */
     public static void trigger(int jobId, TriggerTypeEnum triggerType, int failRetryCount, String executorShardingParam, String executorParam) {
+        // 将任务添加进线程池
         helper.addTrigger(jobId, triggerType, failRetryCount, executorShardingParam, executorParam);
     }
 

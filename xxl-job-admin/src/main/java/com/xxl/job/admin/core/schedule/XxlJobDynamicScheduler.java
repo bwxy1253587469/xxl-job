@@ -68,6 +68,7 @@ public final class XxlJobDynamicScheduler implements ApplicationContextAware {
 	}
 
     // ---------------------- init + destroy ----------------------
+    // admin启动入口
     public void init() throws Exception {
         // admin registry monitor run
         JobRegistryMonitorHelper.getInstance().start();
@@ -76,6 +77,7 @@ public final class XxlJobDynamicScheduler implements ApplicationContextAware {
         JobFailMonitorHelper.getInstance().start();
 
         // admin-server(spring-mvc)
+        // com.xxl.job.admin.service.impl.AdminBizImpl
         NetComServerFactory.putService(AdminBiz.class, XxlJobDynamicScheduler.adminBiz);
         NetComServerFactory.setAccessToken(accessToken);
 
@@ -114,6 +116,7 @@ public final class XxlJobDynamicScheduler implements ApplicationContextAware {
         }
 
         // load-cache
+        // 从缓存中获取执行器
         address = address.trim();
         ExecutorBiz executorBiz = executorBizRepository.get(address);
         if (executorBiz != null) {
@@ -121,6 +124,7 @@ public final class XxlJobDynamicScheduler implements ApplicationContextAware {
         }
 
         // set-cache
+        // 为空时 创建一个代理对象 并缓存
         executorBiz = (ExecutorBiz) new NetComClientProxy(ExecutorBiz.class, address, accessToken).getObject();
         executorBizRepository.put(address, executorBiz);
         return executorBiz;
@@ -211,6 +215,7 @@ public final class XxlJobDynamicScheduler implements ApplicationContextAware {
 		}*/
         
         // schedule : jobDetail + cronTrigger
+        // 添加到quartz
         Date date = scheduler.scheduleJob(jobDetail, cronTrigger);
 
         logger.info(">>>>>>>>>>> addJob success, jobDetail:{}, cronTrigger:{}, date:{}", jobDetail, cronTrigger, date);

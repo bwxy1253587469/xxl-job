@@ -69,6 +69,7 @@ public class XxlJobServiceImpl implements XxlJobService {
 	@Override
 	public ReturnT<String> add(XxlJobInfo jobInfo) {
 		// valid
+		// 校验执行器是否存在
 		XxlJobGroup group = xxlJobGroupDao.load(jobInfo.getJobGroup());
 		if (group == null) {
 			return new ReturnT<String>(ReturnT.FAIL_CODE, (I18nUtil.getString("system_please_choose")+I18nUtil.getString("jobinfo_field_jobgroup")) );
@@ -119,6 +120,7 @@ public class XxlJobServiceImpl implements XxlJobService {
 		}
 
 		// add in db
+		// 将job报错到数据库
 		xxlJobInfoDao.save(jobInfo);
 		if (jobInfo.getId() < 1) {
 			return new ReturnT<String>(ReturnT.FAIL_CODE, (I18nUtil.getString("jobinfo_field_add")+I18nUtil.getString("system_fail")) );

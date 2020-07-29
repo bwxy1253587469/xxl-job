@@ -41,6 +41,7 @@ public class XxlJobTrigger {
      */
     public static void trigger(int jobId, TriggerTypeEnum triggerType, int failRetryCount, String executorShardingParam, String executorParam) {
         // load data
+        // 加载任务信息
         XxlJobInfo jobInfo = XxlJobDynamicScheduler.xxlJobInfoDao.loadById(jobId);
         if (jobInfo == null) {
             logger.warn(">>>>>>>>>>>> trigger fail, jobId invalid，jobId={}", jobId);
@@ -50,6 +51,7 @@ public class XxlJobTrigger {
             jobInfo.setExecutorParam(executorParam);
         }
         int finalFailRetryCount = failRetryCount>=0?failRetryCount:jobInfo.getExecutorFailRetryCount();
+        // 加载执行器信息
         XxlJobGroup group = XxlJobDynamicScheduler.xxlJobGroupDao.load(jobInfo.getJobGroup());
 
         // sharding param
@@ -62,8 +64,10 @@ public class XxlJobTrigger {
                 shardingParam[1] = Integer.valueOf(shardingArr[1]);
             }
         }
+        // 路由策略
         if (ExecutorRouteStrategyEnum.SHARDING_BROADCAST==ExecutorRouteStrategyEnum.match(jobInfo.getExecutorRouteStrategy(), null)
                 && CollectionUtils.isNotEmpty(group.getRegistryList()) && shardingParam==null) {
+            // 分片广播
             for (int i = 0; i < group.getRegistryList().size(); i++) {
                 processTrigger(group, jobInfo, finalFailRetryCount, triggerType, i, group.getRegistryList().size());
             }
@@ -87,11 +91,14 @@ public class XxlJobTrigger {
     private static void processTrigger(XxlJobGroup group, XxlJobInfo jobInfo, int finalFailRetryCount, TriggerTypeEnum triggerType, int index, int total){
 
         // param
+        // 阻塞策略
         ExecutorBlockStrategyEnum blockStrategy = ExecutorBlockStrategyEnum.match(jobInfo.getExecutorBlockStrategy(), ExecutorBlockStrategyEnum.SERIAL_EXECUTION);  // block strategy
+        // 路由策略
         ExecutorRouteStrategyEnum executorRouteStrategyEnum = ExecutorRouteStrategyEnum.match(jobInfo.getExecutorRouteStrategy(), null);    // route strategy
         String shardingParam = (ExecutorRouteStrategyEnum.SHARDING_BROADCAST==executorRouteStrategyEnum)?String.valueOf(index).concat("/").concat(String.valueOf(total)):null;
 
         // 1、save log-id
+        // 1. 记录执行日志
         XxlJobLog jobLog = new XxlJobLog();
         jobLog.setJobGroup(jobInfo.getJobGroup());
         jobLog.setJobId(jobInfo.getId());
@@ -100,6 +107,7 @@ public class XxlJobTrigger {
         logger.debug(">>>>>>>>>>> xxl-job trigger start, jobId:{}", jobLog.getId());
 
         // 2、init trigger-param
+        // 2. 组装请求参数
         TriggerParam triggerParam = new TriggerParam();
         triggerParam.setJobId(jobInfo.getId());
         triggerParam.setExecutorHandler(jobInfo.getExecutorHandler());
@@ -115,9 +123,11 @@ public class XxlJobTrigger {
         triggerParam.setBroadcastTotal(total);
 
         // 3、init address
+        // 3.获取客户端IP
         String address = null;
         ReturnT<String> routeAddressResult = null;
         if (CollectionUtils.isNotEmpty(group.getRegistryList())) {
+            // 分片广播策略
             if (ExecutorRouteStrategyEnum.SHARDING_BROADCAST == executorRouteStrategyEnum) {
                 if (index < group.getRegistryList().size()) {
                     address = group.getRegistryList().get(index);
@@ -125,6 +135,7 @@ public class XxlJobTrigger {
                     address = group.getRegistryList().get(0);
                 }
             } else {
+                // 通过路由策略选择客户端IP
                 routeAddressResult = executorRouteStrategyEnum.getRouter().route(triggerParam, group.getRegistryList());
                 if (routeAddressResult.getCode() == ReturnT.SUCCESS_CODE) {
                     address = routeAddressResult.getContent();
@@ -135,6 +146,7 @@ public class XxlJobTrigger {
         }
 
         // 4、trigger remote executor
+        // 4. 执行远程调度
         ReturnT<String> triggerResult = null;
         if (address != null) {
             triggerResult = runExecutor(triggerParam, address);
@@ -185,7 +197,9 @@ public class XxlJobTrigger {
     public static ReturnT<String> runExecutor(TriggerParam triggerParam, String address){
         ReturnT<String> runResult = null;
         try {
+            // 返回的代理对象 不是ExecutorBizImpl 这是给客户端用的
             ExecutorBiz executorBiz = XxlJobDynamicScheduler.getExecutorBiz(address);
+            // admin都是运行com.xxl.job.core.rpc.netcom.NetComClientProxy.getObject的invoke方法
             runResult = executorBiz.run(triggerParam);
         } catch (Exception e) {
             logger.error(">>>>>>>>>>> xxl-job trigger error, please check if the executor[{}] is running.", address, e);

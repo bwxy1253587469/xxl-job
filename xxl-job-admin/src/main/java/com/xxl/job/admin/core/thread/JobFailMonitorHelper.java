@@ -42,25 +42,32 @@ public class JobFailMonitorHelper {
 			@Override
 			public void run() {
 				// monitor
+				// 10秒钟循环一次
 				while (!toStop) {
 					try {
 						List<Integer> jobLogIdList = new ArrayList<Integer>();
+						// 从队列中获取joblogid
 						int drainToNum = JobFailMonitorHelper.instance.queue.drainTo(jobLogIdList);
 
 						if (CollectionUtils.isNotEmpty(jobLogIdList)) {
+							// 循环
 							for (Integer jobLogId : jobLogIdList) {
 								if (jobLogId==null || jobLogId==0) {
 									continue;
 								}
+								// 通过jobLogId获取job日志信息
 								XxlJobLog log = XxlJobDynamicScheduler.xxlJobLogDao.load(jobLogId);
 								if (log == null) {
 									continue;
 								}
 								if (IJobHandler.SUCCESS.getCode() == log.getTriggerCode() && log.getHandleCode() == 0) {
+									// 调度成功 + 客户端未回调
 									// job running
+									// job还在跑 将jobLogId加回队列
 									JobFailMonitorHelper.monitor(jobLogId);
 									logger.debug(">>>>>>>>>>> job monitor, job running, JobLogId:{}", jobLogId);
 								} else if (IJobHandler.SUCCESS.getCode() == log.getHandleCode()) {
+									// job执行成功
 									// job success, pass
 									logger.info(">>>>>>>>>>> job monitor, job success, JobLogId:{}", jobLogId);
 								} else /*if (IJobHandler.FAIL.getCode() == log.getTriggerCode()
@@ -70,16 +77,20 @@ public class JobFailMonitorHelper {
 									// job fail,
 
 									// 1、fail retry
+									// 查询job信息
 									XxlJobInfo info = XxlJobDynamicScheduler.xxlJobInfoDao.loadById(log.getJobId());
 
+									// 失败次数大于0 将任务重新添加进线程池
 									if (log.getExecutorFailRetryCount() > 0) {
 										JobTriggerPoolHelper.trigger(log.getJobId(), TriggerTypeEnum.RETRY, (log.getExecutorFailRetryCount()-1), log.getExecutorShardingParam(), null);
 										String retryMsg = "<br><br><span style=\"color:#F39C12;\" > >>>>>>>>>>>"+ I18nUtil.getString("jobconf_trigger_type_retry") +"<<<<<<<<<<< </span><br>";
 										log.setTriggerMsg(log.getTriggerMsg() + retryMsg);
+										// 更新执行日志
 										XxlJobDynamicScheduler.xxlJobLogDao.updateTriggerInfo(log);
 									}
 
 									// 2、fail alarm
+									// 失败告警
 									failAlarm(info, log);
 
 									logger.info(">>>>>>>>>>> job monitor, job fail, JobLogId:{}", jobLogId);
@@ -98,6 +109,7 @@ public class JobFailMonitorHelper {
 
 				// monitor all clear
 				List<Integer> jobLogIdList = new ArrayList<Integer>();
+				// 将队列中的任务 全部取出 发送邮件告警
 				int drainToNum = getInstance().queue.drainTo(jobLogIdList);
 				if (jobLogIdList!=null && jobLogIdList.size()>0) {
 					for (Integer jobLogId: jobLogIdList) {

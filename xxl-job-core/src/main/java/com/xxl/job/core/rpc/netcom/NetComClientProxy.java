@@ -54,6 +54,7 @@ public class NetComClientProxy implements FactoryBean<Object> {
 	                    request.setParameters(args);
 
 	                    // send
+						// 发送http请求
 	                    RpcResponse response = client.send(request);
 	                    
 	                    // valid response

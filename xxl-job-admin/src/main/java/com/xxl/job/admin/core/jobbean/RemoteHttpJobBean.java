@@ -2,7 +2,6 @@ package com.xxl.job.admin.core.jobbean;
 
 import com.xxl.job.admin.core.thread.JobTriggerPoolHelper;
 import com.xxl.job.admin.core.trigger.TriggerTypeEnum;
-import com.xxl.job.admin.core.util.I18nUtil;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.JobKey;
@@ -24,6 +23,7 @@ public class RemoteHttpJobBean extends QuartzJobBean {
 			throws JobExecutionException {
 
 		// load jobId
+		// XXL_JOB_QRTZ_JOB_DETAILS.JOB_NAME = XXL_JOB_QRTZ_TRIGGER_INFO.id
 		JobKey jobKey = context.getTrigger().getJobKey();
 		Integer jobId = Integer.valueOf(jobKey.getName());
 
